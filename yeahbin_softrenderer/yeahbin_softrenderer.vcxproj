@@ -115,6 +115,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="device.h" />
+    <ClInclude Include="light.h" />
+    <ClInclude Include="matrix.h" />
+    <ClInclude Include="mesh.h" />
+    <ClInclude Include="mMath.h" />
+    <ClInclude Include="mPostProcess.h" />
+    <ClInclude Include="mShadowMap.h" />
+    <ClInclude Include="printPhoto.h" />
+    <ClInclude Include="shader.h" />
+    <ClInclude Include="vector3D.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
