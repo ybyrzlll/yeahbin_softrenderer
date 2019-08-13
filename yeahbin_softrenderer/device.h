@@ -6,9 +6,9 @@
 //=====================================================================
 // 渲染设备
 //=====================================================================
-typedef struct {
-	transform_t transform;      // 坐标变换器
-	transform_t transform_inv;		// transform的逆矩阵
+struct Device {
+	Transform transform;      // 坐标变换器
+	Transform transform_inv;		// transform的逆矩阵
 	int width;                  // 窗口宽度
 	int height;                 // 窗口高度
 	IUINT32 **framebuffer;      // 像素缓存：framebuffer[y] 代表第 y行
@@ -24,4 +24,4 @@ typedef struct {
 
 	Light  *light;				//光
 	BaseShader *shader;
-}	device_t;
+};

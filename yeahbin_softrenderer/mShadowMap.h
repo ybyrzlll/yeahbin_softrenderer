@@ -25,7 +25,7 @@ static void Filter(float ** src, const int * width, const int * height) {
 }
 
 //百分比渐进过滤（PCF，percentage-closer filtering）
-static float ShadowCalculation(const device_t *device, const Vector3f *pos) {
+static float ShadowCalculation(const Device *device, const Vector3f *pos) {
 	Vector3f cvv_pos;
 	Vector3f world_pos;
 	Vector3f Light_pos;
@@ -35,15 +35,15 @@ static float ShadowCalculation(const device_t *device, const Vector3f *pos) {
 	//world_pos = matrix_apply(device->transform_inv.MVP, cvv_pos);//逆矩阵(模视+投影变换)
 
 
-	//Light_pos = matrix_apply(device->light->Transform.MVP, world_pos);//光的模视+投影变换
+	//Light_pos = matrix_apply(device->light->transform.MVP, world_pos);//光的模视+投影变换
 	//perspectiveDivide(&Light_pos);//光的透视除法
-	//transform_viewport(&device->light->Transform, &LightBit_pos, &Light_pos);//光的视口变换
+	//transform_viewport(&device->light->transform, &LightBit_pos, &Light_pos);//光的视口变换
 
 	int Core = 3;//卷积范围
 	float shadow = 0.0;
 	float curDepth = Light_pos.z / Light_pos.w;
-	if (0 < (int)LightBit_pos.x && (int)LightBit_pos.x < device->light->Transform.w
-		&& 0 < (int)LightBit_pos.y && (int)LightBit_pos.y< device->light->Transform.h
+	if (0 < (int)LightBit_pos.x && (int)LightBit_pos.x < device->light->transform.w
+		&& 0 < (int)LightBit_pos.y && (int)LightBit_pos.y< device->light->transform.h
 		&& curDepth - shadow_bias> device->light->DepthTexture[(int)LightBit_pos.y][(int)LightBit_pos.x])
 	{
 

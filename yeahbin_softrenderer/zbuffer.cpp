@@ -30,9 +30,6 @@ void Zbuffer::clear()
 	if (offset == offset + 1.0f) {
 		offset = 0.0f;
 		std::cout << "¸üÐÂÁËoffset" << std::endl;
-		/*for (int j = 0; j < height; j++)
-			for (int i = 0; i < width; i++)
-				val[j][i] = 0.0f;*/
 		for (int j = 0; j <= height; j++)
 			for (int i = 0; i <= width; i++)
 				val[j][i] = 0.0f;

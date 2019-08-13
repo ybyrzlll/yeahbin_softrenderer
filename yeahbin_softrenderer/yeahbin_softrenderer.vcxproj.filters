@@ -36,9 +36,6 @@
     <ClInclude Include="shader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="printPhoto.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="mesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -49,6 +46,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="zbuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="printPPM.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

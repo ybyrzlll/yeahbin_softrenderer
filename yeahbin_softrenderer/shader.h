@@ -1,11 +1,9 @@
 #pragma once
-#include "mMath.h"
-#include "printPhoto.h"//for test
 #include <algorithm>
 #define shadow_bias 0.01f
 #define texture_width 255
 #define texture_height 255
-
+using namespace mMath;
 //
 //template<typename T>
 //static T max(T a, T b) { return a > b ? a : b; }
@@ -99,16 +97,16 @@ public:
 
 		interpPos = pos[0] + (pos[1] - pos[0])* u + (pos[2] - pos[0]) * v;
 		interpPos = matrix_apply(MVP_Inverse, interpPos);//当前相机的逆矩阵
-		interpPos = matrix_apply(light.Transform.MVP, interpPos);//光的MVP
+		interpPos = matrix_apply(light.transform.MVP, interpPos);//光的MVP
 		perspectiveDivide(&interpPos);//光的透视除法
-		LightBit_pos = transform_viewport(&light.Transform, &interpPos);//光的视口变换
+		LightBit_pos = transform_viewport(&light.transform, &interpPos);//光的视口变换
 
 		int Core = 3;//卷积范围
 		float shadow = 0.0;
 		float curDepth = interpPos.z;
 		int x = LightBit_pos.x, y = LightBit_pos.y;
-		if (0 < x && x < light.Transform.w
-			&& 0 < y && y< light.Transform.h
+		if (0 < x && x < light.transform.w
+			&& 0 < y && y< light.transform.h
 			&& curDepth - shadow_bias > light.DepthTexture[y][x])
 		{
 

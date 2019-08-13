@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "mMath.h"
+#include "printPPM.h"
 
 #include "mPostProcess.h"
 #include "mShadowMap.h"
@@ -12,7 +13,6 @@
 #include "device.h"
 #include "camera.h"
 #include "shader.h"
-#include "printPhoto.h"
 #include "mesh.h"
 
 #include <windows.h>
@@ -21,6 +21,8 @@
 #define Camera_RotateSpeed 0.02
 
 using namespace std;
+using namespace mMath;
+using namespace printPPM;
 
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框
 #define RENDER_STATE_COLOR          2		// 渲染颜色
@@ -28,7 +30,7 @@ using namespace std;
 #define RENDER_STATE_DEPTHTEXTURE     8		// 渲染阴影深度纹理
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
-void device_init(device_t *device, int width, int height, void *fb) {
+void device_init(Device *device, int width, int height, void *fb) {
 	int need = sizeof(void*) * (height  + 1024) + width * height * 4;
 	char *ptr = (char*)malloc(need + 64);
 	char *framebuf, *zbuf;
@@ -60,7 +62,7 @@ void device_init(device_t *device, int width, int height, void *fb) {
 }
 
 // 删除设备
-void device_destroy(device_t *device) {
+void device_destroy(Device *device) {
 	if (device->framebuffer)
 		free(device->framebuffer);
 	device->framebuffer = NULL;
@@ -69,7 +71,7 @@ void device_destroy(device_t *device) {
 }
 
 // 设置当前纹理
-void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) {
+void device_set_texture(Device *device, void *bits, long pitch, int w, int h) {
 	char *ptr = (char*)bits;
 	int j;
 	assert(w <= 1024 && h <= 1024);
@@ -82,7 +84,7 @@ void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) 
 }
 
 // 清空 framebuffer 和 zbuffer
-void framebuffer_clear(device_t *device, int mode) {
+void framebuffer_clear(Device *device, int mode) {
 	int y, x, height = device->height;
 	for (y = 0; y < device->height; y++) {
 		IUINT32 *dst = device->framebuffer[y];
@@ -94,14 +96,14 @@ void framebuffer_clear(device_t *device, int mode) {
 }
 
 // 画点
-void device_pixel(device_t *device, int x, int y, IUINT32 color) {
+void device_pixel(Device *device, int x, int y, IUINT32 color) {
 	if (((IUINT32)x) < (IUINT32)device->width && ((IUINT32)y) < (IUINT32)device->height) {
 		device->framebuffer[y][x] = color;
 	}
 }
 
 // 绘制线段   DDA
-void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
+void device_draw_line(Device *device, int x1, int y1, int x2, int y2, IUINT32 c) {
 	int x, y, rem = 0;
 	if (x1 == x2 && y1 == y2) {
 		device_pixel(device, x1, y1, c);
@@ -149,7 +151,7 @@ void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 
 }
 
 // 根据坐标读取纹理
-IUINT32 device_texture_read(const device_t *device, float u, float v) {
+IUINT32 Deviceexture_read(const Device *device, float u, float v) {
 	int x, y;
 	u = u * device->max_u;
 	v = v * device->max_v;
@@ -165,7 +167,7 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 //=====================================================================
 
 //光栅化----重心坐标权重插值
-void rasterize(device_t *device, Vector3f &c1,
+void rasterize(Device *device, Vector3f &c1,
 	Vector3f &c2, Vector3f &c3) {
 
 	float area = area_of_triangle(c1, c2, c3);
@@ -243,7 +245,7 @@ void rasterize(device_t *device, Vector3f &c1,
 }
 
 
-void device_draw_primitive2(device_t *device, const  Vector3f *vertices) {
+void device_draw_primitive2(Device *device, const  Vector3f *vertices) {
 	Vector3f p1 = vertices[0], p2 = vertices[1], p3 = vertices[2];
 	int render_state = device->render_state;
 
@@ -272,7 +274,7 @@ void device_draw_primitive2(device_t *device, const  Vector3f *vertices) {
 }
 
 //Cohen-Sutherland 裁剪算法
-void Crop_Cohen_Sutherland(device_t *device, Vector3f *vertices) {
+void Crop_Cohen_Sutherland(Device *device, Vector3f *vertices) {
 	int s1 = transform_check_cvv(vertices[0]);
 	int s2 = transform_check_cvv(vertices[1]);
 	int s3 = transform_check_cvv(vertices[2]);
@@ -481,7 +483,7 @@ vertex_t mesh_plane[4] = {
 	{ {  Plane_Size, -2,  -Plane_Size, 1 }, { 1, 0 }, { 1.0f, 1.0f, 1.0f }, 1 }
 };
 
-//void draw_plane(device_t *device) {
+//void draw_plane(Device *device) {
 //	vertex_t p1 = mesh_plane[0], p2 = mesh_plane[1], p3 = mesh_plane[2], p4 = mesh_plane[3];
 //	p1.tc.u = 0, p1.tc.v = 0, p2.tc.u = 0, p2.tc.v = 1;
 //	p3.tc.u = 1, p3.tc.v = 1, p4.tc.u = 1, p4.tc.v = 0;
@@ -490,7 +492,7 @@ vertex_t mesh_plane[4] = {
 //}
 
 //测试裁剪
-//void draw_Triangle(device_t *device) {
+//void draw_Triangle(Device *device) {
 //	vertex_t p1 = mesh_plane[0], p2 = mesh_plane[1], p3 = mesh_plane[2];
 //	p1.tc.u = 0, p1.tc.v = 0, p2.tc.u = 0, p2.tc.v = 1;
 //	p3.tc.u = 1, p3.tc.v = 1;
@@ -516,7 +518,7 @@ void packDataIntoTris(Vector3i &index, Vector3f *primitive, std::vector<Vector3f
 	}
 }
 
-void draw_mesh(device_t *device, Mesh *mesh) {
+void draw_mesh(Device *device, Mesh *mesh) {
 	std::vector<Vector3i> * vIndices = &mesh->vertexIndices;
 	std::vector<Vector3i> * tIndices = &mesh->textureIndices;
 	std::vector<Vector3i> * nIndices = &mesh->normalsIndices;
@@ -559,7 +561,7 @@ void draw_mesh(device_t *device, Mesh *mesh) {
 	}
 }
 
-void camera_at_zero(device_t *device, Camera camera) {
+void camera_at_zero(Device *device, Camera camera) {
 
 	//camera_set_LookAt(&device->transform.view, &camera.pos, &camera.at, &camera.up);
 	camera_set_PHIGS(&device->transform.view, &camera.pos, &camera.vpn, &camera.up);
@@ -569,7 +571,7 @@ void camera_at_zero(device_t *device, Camera camera) {
 	matrix_inverse(&device->transform.world, &device->transform_inv.world);
 }
 
-void init_texture(device_t *device) {
+void init_texture(Device *device) {
 	static IUINT32 texture[256][256];
 	int i, j;
 	for (j = 0; j < 256; j++) {
@@ -604,12 +606,12 @@ int main(void)
 	//预计算深度纹理，使用另一渲染设备device_shadowmap
 	const int shadowmap_width = 1200,
 		shadowmap_height = 900;
-	device_t device_shadowmap;
+	Device device_shadowmap;
 	device_init(&device_shadowmap, shadowmap_width, shadowmap_height, screen_fb);
 	device_shadowmap.zbuffer = new Zbuffer(shadowmap_width, shadowmap_height);
 	device_shadowmap.render_state = RENDER_STATE_DEPTHTEXTURE;
 	PointLight pointLight(Vector3f(7, 7, -7, 1));
-	Light_init(&pointLight, shadowmap_width, shadowmap_height);
+	pointLight.DepthTexture_init(shadowmap_width, shadowmap_height);
 	device_shadowmap.light = &pointLight;//将光添加到设备
 
 	//设置光线投影
@@ -618,9 +620,9 @@ int main(void)
 	camera.up = { 0, 1, 0, 1 };
 
 	camera_at_zero(&device_shadowmap, camera);//根据摄像机计算矩阵
-	pointLight.Transform = device_shadowmap.transform;//记录 转换到光源空间的变换矩阵+wh
+	pointLight.transform = device_shadowmap.transform;//记录 转换到光源空间的变换矩阵+wh
 	framebuffer_clear(&device_shadowmap, 1);//初始化两个buffer
-	Light_clear(&pointLight, shadowmap_width, shadowmap_height);
+	pointLight.Light_clear(shadowmap_width, shadowmap_height);
 
 	//着色器装配
 	TestShader shader;
@@ -632,7 +634,7 @@ int main(void)
 	draw_mesh(&device_shadowmap, &plane);
 
 	device_destroy(&device_shadowmap);
-	//printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
+	printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
 	//===============================shadow map===============================
 
 	int window_width = 800, window_height = 600;
@@ -644,7 +646,7 @@ int main(void)
 		return -1;
 
 	//初始化渲染设备
-	device_t device;
+	Device device;
 	device_init(&device, window_width, window_height, screen_fb);
 	device.zbuffer = new Zbuffer(window_width, window_height);
 
@@ -747,7 +749,7 @@ int main(void)
 		draw_mesh(&device, &cuboid);
 
 		screen_update();
-		cout <<"帧数："<<(float)10000/(GetTickCount()-t_start) << endl;
+		//cout <<"帧数："<<(float)10000/(GetTickCount()-t_start) << endl;
 		Sleep(1);
 	}
 	return 0;
