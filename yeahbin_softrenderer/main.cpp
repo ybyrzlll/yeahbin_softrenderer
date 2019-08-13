@@ -29,23 +29,20 @@ using namespace std;
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(device_t *device, int width, int height, void *fb) {
-	int need = sizeof(void*) * (height * 2 + 1024) + width * height * 8;
+	int need = sizeof(void*) * (height  + 1024) + width * height * 4;
 	char *ptr = (char*)malloc(need + 64);
 	char *framebuf, *zbuf;
 	int j;
 	assert(ptr);
 	device->framebuffer = (IUINT32**)ptr;
-	device->zbuffer = (float**)(ptr + sizeof(void*) * height);
-	ptr += sizeof(void*) * height * 2;
+	ptr += sizeof(void*) * height ;
 	device->texture = (IUINT32**)ptr;
 	ptr += sizeof(void*) * 1024;
 	framebuf = (char*)ptr;
-	zbuf = (char*)ptr + width * height * 4;
-	ptr += width * height * 8;
+	ptr += width * height * 4;
 	if (fb != NULL) framebuf = (char*)fb;
 	for (j = 0; j < height; j++) {
 		device->framebuffer[j] = (IUINT32*)(framebuf + width * 4 * j);
-		device->zbuffer[j] = (float*)(zbuf + width * 4 * j);
 	}
 	device->texture[0] = (IUINT32*)ptr;
 	device->texture[1] = (IUINT32*)(ptr + 16);
@@ -67,7 +64,7 @@ void device_destroy(device_t *device) {
 	if (device->framebuffer)
 		free(device->framebuffer);
 	device->framebuffer = NULL;
-	device->zbuffer = NULL;
+	device->zbuffer->destroy();
 	device->texture = NULL;
 }
 
@@ -85,7 +82,7 @@ void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) 
 }
 
 // 清空 framebuffer 和 zbuffer
-void device_clear(device_t *device, int mode) {
+void framebuffer_clear(device_t *device, int mode) {
 	int y, x, height = device->height;
 	for (y = 0; y < device->height; y++) {
 		IUINT32 *dst = device->framebuffer[y];
@@ -93,12 +90,6 @@ void device_clear(device_t *device, int mode) {
 		cc = (cc << 16) | (cc << 8) | cc;//？
 		if (mode == 0) cc = device->background;
 		for (x = device->width; x > 0; dst++, x--) dst[0] = cc;
-	}
-	for (y = 0; y < device->height; y++) {
-		float *dst = device->zbuffer[y];
-		for (x = device->width; x > 0; dst++, x--) {
-			dst[0] = 1.0f;
-		}
 	}
 }
 
@@ -187,7 +178,8 @@ void rasterize(device_t *device, Vector3f &c1,
 	Vector3f perCor{ 1 / c1.w, 1 / c2.w, 1 / c3.w };
 	float SumCor;
 
-	Vector3f zVals({ c1.z, c2.z, c3.z });
+	Vector3f zVals({ c1.w, c2.w, c3.w });
+	//cout << c1.w << c2.w << c3.w << endl;
 
 	//find triangle boding box
 	int xMax, xMin, yMax, yMin;
@@ -222,10 +214,8 @@ void rasterize(device_t *device, Vector3f &c1,
 				Vector3f temp = e * perCor;//e/area即为该三角形占整个三角形的比例
 				SumCor = 1 / (temp.x + temp.y + temp.z);
 				Vector3f lambda = temp * SumCor;
-				float curDepth = lambda.dotProduct(zVals);
-				if (curDepth < device->zbuffer[y][x]) {
-
-					device->zbuffer[y][x] = curDepth;
+				float curDepth = lambda.dotProduct(zVals);//得到相机坐标系下的z
+				if (device->zbuffer->check(curDepth ,y, x)) {
 
 					if (render_state & RENDER_STATE_DEPTHTEXTURE)
 					{
@@ -616,6 +606,7 @@ int main(void)
 		shadowmap_height = 900;
 	device_t device_shadowmap;
 	device_init(&device_shadowmap, shadowmap_width, shadowmap_height, screen_fb);
+	device_shadowmap.zbuffer = new Zbuffer(shadowmap_width, shadowmap_height);
 	device_shadowmap.render_state = RENDER_STATE_DEPTHTEXTURE;
 	PointLight pointLight(Vector3f(7, 7, -7, 1));
 	Light_init(&pointLight, shadowmap_width, shadowmap_height);
@@ -628,7 +619,7 @@ int main(void)
 
 	camera_at_zero(&device_shadowmap, camera);//根据摄像机计算矩阵
 	pointLight.Transform = device_shadowmap.transform;//记录 转换到光源空间的变换矩阵+wh
-	device_clear(&device_shadowmap, 1);//初始化两个buffer
+	framebuffer_clear(&device_shadowmap, 1);//初始化两个buffer
 	Light_clear(&pointLight, shadowmap_width, shadowmap_height);
 
 	//着色器装配
@@ -655,6 +646,7 @@ int main(void)
 	//初始化渲染设备
 	device_t device;
 	device_init(&device, window_width, window_height, screen_fb);
+	device.zbuffer = new Zbuffer(window_width, window_height);
 
 	//device.light = &pointLight;//将光添加到该设备
 
@@ -675,9 +667,14 @@ int main(void)
 
 	//BaseShader *shaderSwtich;
 
+	DWORD t_start;
+
 	while (screen_exit == 0 && screen_keys[VK_ESCAPE] == 0) {
+		t_start = GetTickCount();
+
 		screen_dispatch();
-		device_clear(&device, 1);
+		framebuffer_clear(&device, 1);
+		device.zbuffer->clear();
 		camera_at_zero(&device, camera);
 
 		Vector3f camera_z;
@@ -750,6 +747,7 @@ int main(void)
 		draw_mesh(&device, &cuboid);
 
 		screen_update();
+		cout <<"帧数："<<(float)10000/(GetTickCount()-t_start) << endl;
 		Sleep(1);
 	}
 	return 0;

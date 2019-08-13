@@ -126,9 +126,11 @@
     <ClInclude Include="printPhoto.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="vector3D.h" />
+    <ClInclude Include="zbuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="zbuffer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
