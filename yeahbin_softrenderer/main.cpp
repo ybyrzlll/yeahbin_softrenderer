@@ -563,7 +563,7 @@ void draw_mesh(Device *device, Mesh *mesh) {
 
 void camera_at_zero(Device *device, Camera camera) {
 
-	//camera_set_LookAt(&device->transform.view, &camera.pos, &camera.at, &camera.up);
+	//camera_set_LookAt(&device->transform.view, camera.pos, camera.at, &camera.up);
 	camera_set_PHIGS(&device->transform.view, &camera.pos, &camera.vpn, &camera.up);
 	transform_update(&device->transform);
 	//计算矩阵的逆
@@ -600,7 +600,6 @@ int main(void)
 	int indicator = 0;
 	int kbhit = 0;
 	float thetaY, thetaZ;
-	Vector3f pos;
 
 	//===============================shadow map===============================
 	//预计算深度纹理，使用另一渲染设备device_shadowmap
@@ -634,7 +633,7 @@ int main(void)
 	draw_mesh(&device_shadowmap, &plane);
 
 	device_destroy(&device_shadowmap);
-	printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
+	//printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
 	//===============================shadow map===============================
 
 	int window_width = 800, window_height = 600;
@@ -656,10 +655,9 @@ int main(void)
 	//设置主相机
 	camera.pos = { 5, 2.5, 5, 1 };
 	camera.vpn = { -5, -2.5, -5, 1 };
-	vector_normalize(&camera.vpn);
+	camera.vpn.normalized();
 	camera.up = { 0, 1, 0, 1 };
 	camera_at_zero(&device, camera);
-	pos = camera.pos;
 	float Camera_Speed = 0.1f;//摄像机运动速度
 	vector_zoom(&camera.vpn, Camera_Speed);
 
@@ -667,7 +665,13 @@ int main(void)
 	//printColorPhoto(device.texture, 256, 256);
 	device.render_state = RENDER_STATE_COLOR;
 
-	//BaseShader *shaderSwtich;
+	BaseShader *shaderSwtich[4];
+
+	PhongShader phongShader;
+	ShadowMapShader shadowMapShader;
+	
+	shaderSwtich[0] = &phongShader;
+	shaderSwtich[1] = &shadowMapShader;
 
 	DWORD t_start;
 
@@ -681,15 +685,15 @@ int main(void)
 
 		Vector3f camera_z;
 		vector_crossproduct(&camera_z, &camera.vpn, &camera.up);
-		vector_normalize(&camera_z);
+		camera_z.normalized();
 		vector_zoom(&camera_z, Camera_Speed);
 
-		if (screen_keys[0x41]) vector_add(&camera.pos, &camera.pos, &camera_z);//a
-		if (screen_keys[0x44]) vector_sub(&camera.pos, &camera.pos, &camera_z);//d
+		if (screen_keys[0x41]) camera.pos= camera.pos + camera_z;//a
+		if (screen_keys[0x44]) camera.pos= camera.pos - camera_z;//d
 
 		//camera.pos.x += 0.1f;//d
-		if (screen_keys[0x57]) vector_add(&camera.pos, &camera.pos, &camera.vpn);//w
-		if (screen_keys[0x53]) vector_sub(&camera.pos, &camera.pos, &camera.vpn);//s
+		if (screen_keys[0x57]) camera.pos= camera.pos + camera.vpn;//w
+		if (screen_keys[0x53]) camera.pos= camera.pos - camera.vpn;//s
 
 		thetaY = thetaZ = 0;
 		if (screen_keys[VK_LEFT]) thetaY = -Camera_RotateSpeed;
@@ -716,34 +720,33 @@ int main(void)
 			kbhit = 0;
 		}
 
-		//着色器--普通
-		PhongShader ordinaryShader;
-		ordinaryShader.MVP = device.transform.MVP;
+		////着色器--普通
+		//PhongShader ordinaryShader;
+		//ordinaryShader.MVP = device.transform.MVP;
 
-		//着色器--贴纹理
-		TestTexShader texShader;
-		texShader.MVP = device.transform.MVP;
-		texShader.texture = device.texture;
+		////着色器--贴纹理
+		//TestTexShader texShader;
+		//texShader.MVP = device.transform.MVP;
+		//texShader.texture = device.texture;
 
 		//着色器--shawdowmap阴影
-		ShadowMapShader shadowMapShader;
 		shadowMapShader.MVP = device.transform.MVP;
 		shadowMapShader.MVP_Inverse = device.transform_inv.MVP;
 		shadowMapShader.light = pointLight;
 
 		//着色器--phong
-		PhongShader phongShader;
 		phongShader.MVP = device.transform.MVP;
 		phongShader.MV = device.transform.world * device.transform.view;
 		phongShader.pointLight = &pointLight;
 
+
 		//device.shader = &texShader;
 		//device.shader = &shadowMapShader;
 		//device.shader = &ordinaryShader;
-		device.shader = &phongShader;
+
+		device.shader = shaderSwtich[1];
 
 		draw_mesh(&device, &plane);
-
 
 
 		draw_mesh(&device, &cuboid);

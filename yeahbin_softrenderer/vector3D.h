@@ -56,11 +56,16 @@ struct Vector3 {
 		return Vector3(x * rhs, y * rhs, z * rhs, w * rhs);
 	}
 
-	void operator+=(const Vector3 &rhs) const
+	/*void operator+=(const Vector3 &rhs) const
 	{
 		x += rhs.x; y += rhs.y; z += rhs.z; w += rhs.w;
-	}
+	}*/
 
+	/*void operator-=(const Vector3 &rhs) const
+	{
+		x -= rhs.x; y -= rhs.y; z -= rhs.z; w -= rhs.w;
+	}
+*/
 	T  dotProduct(const Vector3 &rhs) const
 	{
 		return x * rhs.x + y * rhs.y + z * rhs.z;
@@ -90,28 +95,6 @@ struct Vector3 {
 typedef Vector3<float> Vector3f;
 typedef Vector3<int> Vector3i;
 
-// | v |
-static float vector_length(const Vector3f *v) {
-	float sq = v->x * v->x + v->y * v->y + v->z * v->z;
-	return (float)sqrt(sq);
-}
-
-// z = x + y
-static void vector_add(Vector3f *z, Vector3f *x, const Vector3f *y) {
-	z->x = x->x + y->x;
-	z->y = x->y + y->y;
-	z->z = x->z + y->z;
-	z->w = 1.0;
-}
-
-// z = x - y
-static void vector_sub(Vector3f *z, const Vector3f *x, const Vector3f *y) {
-	z->x = x->x - y->x;
-	z->y = x->y - y->y;
-	z->z = x->z - y->z;
-	z->w = 1.0;
-}
-
 // 矢量点乘
 static float vector_dotproduct(const Vector3f *x, const Vector3f *y) {
 	return x->x * y->x + x->y * y->y + x->z * y->z;
@@ -135,17 +118,6 @@ static void vector_interp(Vector3f *z, const Vector3f *x1, const Vector3f *x2, f
 	z->y = interp(x1->y, x2->y, t);
 	z->z = interp(x1->z, x2->z, t);
 	z->w = 1.0f;
-}
-
-// 矢量归一化
-static void vector_normalize(Vector3f *v) {
-	float length = vector_length(v);
-	if (length != 0.0f) {
-		float inv = 1.0f / length;
-		v->x *= inv;
-		v->y *= inv;
-		v->z *= inv;
-	}
 }
 
 // 矢量缩放

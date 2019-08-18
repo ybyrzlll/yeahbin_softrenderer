@@ -17,42 +17,42 @@ namespace mMath {
 	typedef unsigned int IUINT32;
 
 	// 设置摄像机  Look-At方法
-	void camera_set_LookAt(Matrix4 *m, const Vector3f *eye, const Vector3f *at, const Vector3f *up) {
+	/*void camera_set_LookAt(Matrix4 *m, const Vector3f& eye, const Vector3f &at, const Vector3f *up) {
 		Vector3f xaxis, yaxis, zaxis;
 
-		vector_sub(&zaxis, at, eye);
-		vector_normalize(&zaxis);
+		zaxis = at - eye;
+		zaxis.normalized();
 		vector_crossproduct(&xaxis, up, &zaxis);
-		vector_normalize(&xaxis);
+		xaxis.normalized();
 		vector_crossproduct(&yaxis, &zaxis, &xaxis);
 
 		m->m[0][0] = xaxis.x;
 		m->m[1][0] = xaxis.y;
 		m->m[2][0] = xaxis.z;
-		m->m[3][0] = -vector_dotproduct(&xaxis, eye);
+		m->m[3][0] = -vector_dotproduct(&xaxis, &eye);
 
 		m->m[0][1] = yaxis.x;
 		m->m[1][1] = yaxis.y;
 		m->m[2][1] = yaxis.z;
-		m->m[3][1] = -vector_dotproduct(&yaxis, eye);
+		m->m[3][1] = -vector_dotproduct(&yaxis, &eye);
 
 		m->m[0][2] = zaxis.x;
 		m->m[1][2] = zaxis.y;
 		m->m[2][2] = zaxis.z;
-		m->m[3][2] = -vector_dotproduct(&zaxis, eye);
+		m->m[3][2] = -vector_dotproduct(&zaxis, &eye);
 
 		m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
 		m->m[3][3] = 1.0f;
-	}
+	}*/
 
 	// 设置摄像机  PHIGS方法
 	void camera_set_PHIGS(Matrix4 *m, const Vector3f *eye, const Vector3f *vpn, const Vector3f *up) {
 		Vector3f xaxis, yaxis, zaxis;
 
 		zaxis = *vpn;
-		vector_normalize(&zaxis);
+		zaxis.normalized();
 		vector_crossproduct(&xaxis, up, &zaxis);
-		vector_normalize(&xaxis);
+		&xaxis.normalized();
 		vector_crossproduct(&yaxis, &zaxis, &xaxis);
 
 		m->m[0][0] = xaxis.x;

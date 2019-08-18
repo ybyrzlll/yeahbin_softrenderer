@@ -103,7 +103,7 @@ public:
 
 		int Core = 3;//¾í»ý·¶Î§
 		float shadow = 0.0;
-		float curDepth = interpPos.z;
+		float curDepth = interpPos.w;
 		int x = LightBit_pos.x, y = LightBit_pos.y;
 		if (0 < x && x < light.transform.w
 			&& 0 < y && y< light.transform.h
@@ -171,7 +171,7 @@ public:
 	//Per object data
 	Matrix4 MVP, MV, V;
 	float ambientStrength = 0.05, specularStrength = 1;
-	Vector3f lightColorAmb{ 0.152, 0.152, 0.152 }, lightColorDiff{ 0.5,0.5,1 }, lightColorSpec{ 1,1,1 };
+	Vector3f lightColorAmb{ 0.152, 0.152, 0.152 }, lightColorDiff{ 1,0.5,1 }, lightColorSpec{ 1,1,1 };
 	Vector3f rgb{ 255,255,255 };
 	PointLight *pointLight;
 
@@ -217,7 +217,8 @@ public:
 		//cout <<"diffuse: " << diffuse.x << "  " << diffuse.y << "  " << diffuse.z  << endl;
 		//cout << "specular: " << specular.x << "  " << specular.y << "  " << specular.z << "  " << endl<<endl;
 
-		return (ambient + diffuse + specular) * rgb;//  
+		return (ambient + diffuse + specular) * rgb;//   
 	}
 
 };
+

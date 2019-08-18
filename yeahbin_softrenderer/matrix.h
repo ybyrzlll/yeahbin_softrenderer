@@ -191,7 +191,7 @@ static void matrix_set_rotate(Matrix4 *m, float x, float y, float z, float theta
 	float qcos = (float)cos(theta * 0.5f);
 	Vector3f vec{ x, y, z, 1.0f };
 	float w = qcos;
-	vector_normalize(&vec);
+	vec.normalized(); 
 	x = vec.x * qsin;
 	y = vec.y * qsin;
 	z = vec.z * qsin;
