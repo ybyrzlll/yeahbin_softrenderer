@@ -22,6 +22,7 @@ struct Device {
 	IUINT32 background;         // 背景颜色
 	IUINT32 foreground;         // 线框颜色
 
+	Camera *camera;
 	Light  *light;				//光
 	BaseShader *shader;
 };

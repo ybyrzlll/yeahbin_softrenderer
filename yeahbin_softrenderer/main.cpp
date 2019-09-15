@@ -4,7 +4,7 @@
 #include <iostream>
 #include <assert.h>
 
-#include "mMath.h"
+//#include "mMath.h"
 #include "printPPM.h"
 
 #include "mPostProcess.h"
@@ -14,6 +14,7 @@
 #include "camera.h"
 #include "shader.h"
 #include "mesh.h"
+#include "objParser.h"
 
 #include <windows.h>
 #include <tchar.h>
@@ -549,6 +550,9 @@ void draw_mesh(Device *device, Mesh *mesh) {
 
 		Vector3f lightDir[3];
 
+		//todo:暂时还无 模型变换 所以用的是模型坐标
+		//if (backFaceCulling(trianglePrimitive[0], (*fNormals)[j], device->camera->pos)) continue;
+
 		for (int i = 0; i < 3; ++i) {
 			//顶点着色
 			trianglePrimitive[i] = device->shader->vertex(trianglePrimitive[i], normalPrim[i],
@@ -590,6 +594,8 @@ int main(void)
 	Mesh cuboid, plane;
 	buildMeshFromFile(cuboid, "Mesh/cuboid.obj");
 	buildMeshFromFile(plane, "Mesh/plane.obj");
+	cuboid.buildFacetNormal();
+	plane.buildFacetNormal();
 
 	Camera camera;
 	int states[] = {
@@ -617,7 +623,7 @@ int main(void)
 	camera.pos = pointLight.pos;
 	camera.vpn = { -7, -7, 7, 1 };
 	camera.up = { 0, 1, 0, 1 };
-
+	device_shadowmap.camera = &camera;
 	camera_at_zero(&device_shadowmap, camera);//根据摄像机计算矩阵
 	pointLight.transform = device_shadowmap.transform;//记录 转换到光源空间的变换矩阵+wh
 	framebuffer_clear(&device_shadowmap, 1);//初始化两个buffer
@@ -657,6 +663,7 @@ int main(void)
 	camera.vpn = { -5, -2.5, -5, 1 };
 	camera.vpn.normalized();
 	camera.up = { 0, 1, 0, 1 };
+	device.camera = &camera;
 	camera_at_zero(&device, camera);
 	float Camera_Speed = 0.1f;//摄像机运动速度
 	vector_zoom(&camera.vpn, Camera_Speed);
@@ -674,6 +681,9 @@ int main(void)
 	shaderSwtich[1] = &shadowMapShader;
 
 	DWORD t_start;
+
+	float sum = 0.0f;
+	int count = 0;
 
 	while (screen_exit == 0 && screen_keys[VK_ESCAPE] == 0) {
 		t_start = GetTickCount();
@@ -744,7 +754,7 @@ int main(void)
 		//device.shader = &shadowMapShader;
 		//device.shader = &ordinaryShader;
 
-		device.shader = shaderSwtich[1];
+		device.shader = shaderSwtich[0];
 
 		draw_mesh(&device, &plane);
 
@@ -752,7 +762,15 @@ int main(void)
 		draw_mesh(&device, &cuboid);
 
 		screen_update();
-		//cout <<"帧数："<<(float)10000/(GetTickCount()-t_start) << endl;
+		float shrub = (float)10000 / (GetTickCount() - t_start);
+		//cout <<"帧数："<< shrub << endl;
+		sum += shrub;
+		count = count++;
+		if (count > 99) {
+			cout << "每一百桢的平均： " << sum / 100 << endl;
+			count = 0;
+			sum = 0.0f;
+		}
 		Sleep(1);
 	}
 	return 0;

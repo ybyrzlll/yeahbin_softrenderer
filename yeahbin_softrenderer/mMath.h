@@ -194,6 +194,12 @@ namespace mMath {
 		if (*a & 32) { return (1.0f - p1->y) / (p2->y - p1->y); }
 	}
 
+	//背面剔除
+	bool backFaceCulling(Vector3f vpos, Vector3f fNormal, Vector3f eye) {
+		float intensity = (vpos - eye).normalized().dotProduct(fNormal);
+		return  intensity >= 0.0;
+	}
+
 	//用叉乘求三点围成三角形的面积----ba叉乘ca    c在ba右边大于0
 	float area_of_triangle(Vector3f &a, Vector3f &b, Vector3f &c) {
 		return (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);

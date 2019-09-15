@@ -123,6 +123,7 @@
     <ClInclude Include="mMath.h" />
     <ClInclude Include="mPostProcess.h" />
     <ClInclude Include="mShadowMap.h" />
+    <ClInclude Include="objParser.h" />
     <ClInclude Include="printPPM.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="vector3D.h" />
