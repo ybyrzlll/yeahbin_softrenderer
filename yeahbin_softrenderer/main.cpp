@@ -371,6 +371,9 @@ static LRESULT screen_events(HWND, UINT, WPARAM, LPARAM);
 
 // 初始化窗口并设置标题
 int screen_init(int w, int h, const TCHAR *title) {
+	//系统支持的结构，用来存储某一类窗口的信息，如ClassStyle，消息处理函数等
+	//一个WNDCLASS可以对应多个窗口对象
+	//WNDPROC： 
 	WNDCLASS wc = { CS_BYTEALIGNCLIENT, (WNDPROC)screen_events, 0, 0, 0,
 		NULL, NULL, NULL, NULL, _T("SCREEN3.1415926") };
 	BITMAPINFO bi = { { sizeof(BITMAPINFOHEADER), w, -h, 1, 32, BI_RGB,
@@ -382,11 +385,15 @@ int screen_init(int w, int h, const TCHAR *title) {
 
 	screen_close();
 
+	//窗口背景为黑色
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	//获取当前应用程序或DLL文件的模块句柄（当前进程空间的装入地址，即进程地址空间中可执行文件的基址）
 	wc.hInstance = GetModuleHandle(NULL);
+	//窗口采用箭头光标
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	if (!RegisterClass(&wc)) return -1;
+	if (!RegisterClass(&wc)) return -1;//在系统注册某一类型的窗体，将WNDCLASS数据注册为一个窗口类
 
+	//CreateWindow将WNDCLASS定义的窗体变成实例
 	screen_handle = CreateWindow(_T("SCREEN3.1415926"), title,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 		0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
@@ -394,12 +401,19 @@ int screen_init(int w, int h, const TCHAR *title) {
 
 	screen_exit = 0;
 	hDC = GetDC(screen_handle);
+	//创建一个与指定设备兼容的内存设备上下文环境
 	screen_dc = CreateCompatibleDC(hDC);
 	ReleaseDC(screen_handle, hDC);
 
+	//创建一个与设备无关的位图
+	//HDC hdc 设备环境句柄。如果iUsage的值是DIB_PAL_COLORS，那么函数使用该设备环境的逻辑调色板对与设备无关位图的颜色进行初始化。
+	//CONST BITMAPINFO * pbmi：指向BITMAPINFO结构的指针，该结构指定了设备无关位图的各种属性，其中包括位图的尺寸和颜色。
+	//UINT iUsage：指定由pbmi参数指定的BITMAPINFO结构中的成员bmiColors数组包含的数据类型（要么是逻辑调色板索引值，要么是原文的RGB值）。
+	//VOID * ppvBits指向一个变量的指针，该变量接收一个指向DIB位数据值的指针
 	screen_hb = CreateDIBSection(screen_dc, &bi, DIB_RGB_COLORS, &ptr, 0, 0);
 	if (screen_hb == NULL) return -3;
 
+	//选择一对象到指定的设备上下文环境中，该新对象替换先前的相同类型的对象。
 	screen_ob = (HBITMAP)SelectObject(screen_dc, screen_hb);
 	screen_fb = (unsigned char*)ptr;
 	screen_w = w;
@@ -459,7 +473,13 @@ void screen_dispatch(void) {
 	MSG msg;
 	while (1) {
 		if (!PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) break;
+		//GetMessage()函数是从调用线程的消息队列中取出一条消息；对于每一个应用程序窗口线程，操作系统都会
+		//为其建立一个消息队列，当我们的窗口有消息时（即所有与这个窗口线程相关的消息），操纵系统会把这个
+		//消息放到该线程的消息队列当中，我们的窗口程序就通过这个
+		//GetMessage()函数从自己的消息队列中取出一条一条具体的消息并进行响应操作。
 		if (!GetMessage(&msg, NULL, 0, 0)) break;
+		//DispatchMessage()函数是将我们取出的消息传到窗口的回调函数去处理；可以理解为
+		//该函数将取出的消息路由给操作系统，然后操作系统去调用我们的窗口回调函数对这个消息进行处理。
 		DispatchMessage(&msg);
 	}
 }
