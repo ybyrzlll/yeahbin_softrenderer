@@ -214,10 +214,10 @@ void rasterize(Device *device, Vector3f &c1,
 			if (e.x >= 0 && e.y >= 0 && e.z >= 0)//该点在顺序三边的同一侧则在三角形内
 			{
 				//透视矫正 perspective correct
-				//Vector3f temp = e * perCor;//e/area即为该三角形占整个三角形的比例
-				//SumCor = 1 / (temp.x + temp.y + temp.z);
-				//Vector3f lambda = temp * SumCor;
-				Vector3f lambda = e * area;
+				//Vector3f lambda = e * area; 在2D中，e/area即为该三角形占整个三角形的比例
+				Vector3f temp = e * perCor;//  3D中，要乘以1/z才是准确的占每个三角形的比例
+				SumCor = 1 / (temp.x + temp.y + temp.z);
+				Vector3f lambda = temp * SumCor;
 				float curDepth = lambda.dotProduct(zVals);//得到相机坐标系下的z
 				if (device->zbuffer->check(curDepth ,y, x)) {
 
