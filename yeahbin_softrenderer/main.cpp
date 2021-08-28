@@ -200,7 +200,7 @@ void rasterize(Device *device, Vector3f &c1,
 	float Y31 = c1.x - c3.x, X31 = c3.y - c1.y;
 	float Y12 = c2.x - c1.x, X12 = c1.y - c2.y;
 
-	Vector3f e, e_row;
+	Vector3f e, e_row;//e,e_row分别存储了三个三角形的面积
 	Vector3f point{ (float)xMin, (float)yMin, 0 };
 	e_row.x = area_of_triangle(c2, c3, point);
 	e_row.y = area_of_triangle(c3, c1, point);
@@ -214,9 +214,10 @@ void rasterize(Device *device, Vector3f &c1,
 			if (e.x >= 0 && e.y >= 0 && e.z >= 0)//该点在顺序三边的同一侧则在三角形内
 			{
 				//透视矫正 perspective correct
-				Vector3f temp = e * perCor;//e/area即为该三角形占整个三角形的比例
-				SumCor = 1 / (temp.x + temp.y + temp.z);
-				Vector3f lambda = temp * SumCor;
+				//Vector3f temp = e * perCor;//e/area即为该三角形占整个三角形的比例
+				//SumCor = 1 / (temp.x + temp.y + temp.z);
+				//Vector3f lambda = temp * SumCor;
+				Vector3f lambda = e * area;
 				float curDepth = lambda.dotProduct(zVals);//得到相机坐标系下的z
 				if (device->zbuffer->check(curDepth ,y, x)) {
 
@@ -373,7 +374,7 @@ static LRESULT screen_events(HWND, UINT, WPARAM, LPARAM);
 int screen_init(int w, int h, const TCHAR *title) {
 	//系统支持的结构，用来存储某一类窗口的信息，如ClassStyle，消息处理函数等
 	//一个WNDCLASS可以对应多个窗口对象
-	//WNDPROC： 
+	//WNDPROC： 左键按下和左键抬起，应用程序将通过GetMessage等方法最终将消息提交到窗口过程（WndProc[英文全称windows process])指向一个应用程序定义的窗口过程的指针。
 	WNDCLASS wc = { CS_BYTEALIGNCLIENT, (WNDPROC)screen_events, 0, 0, 0,
 		NULL, NULL, NULL, NULL, _T("SCREEN3.1415926") };
 	BITMAPINFO bi = { { sizeof(BITMAPINFOHEADER), w, -h, 1, 32, BI_RGB,
@@ -600,9 +601,14 @@ void init_texture(Device *device) {
 	int i, j;
 	for (j = 0; j < 256; j++) {
 		for (i = 0; i < 256; i++) {
+			//int x = i / 32, y = j / 32;
 			int x = i / 32, y = j / 32;
-			//texture[j][i] = ((x + y) & 1) ? 0xffffff : 0x3fbcef;//skyblue
-			texture[j][i] = ((x + y) & 1) ? 0xffffff : 0xffb6c1;//pink
+			texture[j][i] = ((x + y) & 1) ? 0xffffff : 0x3fbcef;//skyblue
+			/*if ((x + y) & 1)
+				int te = 1;
+			else
+				int te = 2;*/
+			//texture[j][i] = ((x + y) & 1) ? 0xffffff : 0xffb6c1;//pink
 		}
 	}
 	device_set_texture(device, texture, 256 * 4, 256, 256);
@@ -690,15 +696,17 @@ int main(void)
 
 	init_texture(&device);
 	//printColorPhoto(device.texture, 256, 256);
-	device.render_state = RENDER_STATE_COLOR;
+	device.render_state = RENDER_STATE_COLOR;// RENDER_STATE_COLOR;
 
 	BaseShader *shaderSwtich[4];
 
 	PhongShader phongShader;
 	ShadowMapShader shadowMapShader;
+	TestTexShader texShader;
 	
 	shaderSwtich[0] = &phongShader;
 	shaderSwtich[1] = &shadowMapShader;
+	shaderSwtich[2] = &texShader;
 
 	DWORD t_start;
 
@@ -756,8 +764,8 @@ int main(void)
 
 		////着色器--贴纹理
 		//TestTexShader texShader;
-		//texShader.MVP = device.transform.MVP;
-		//texShader.texture = device.texture;
+		texShader.MVP = device.transform.MVP;
+		texShader.texture = device.texture;
 
 		//着色器--shawdowmap阴影
 		shadowMapShader.MVP = device.transform.MVP;
@@ -774,10 +782,11 @@ int main(void)
 		//device.shader = &shadowMapShader;
 		//device.shader = &ordinaryShader;
 
-		device.shader = shaderSwtich[0];
+		device.shader = shaderSwtich[2];
 
 		draw_mesh(&device, &plane);
 
+		device.shader = shaderSwtich[2];
 
 		draw_mesh(&device, &cuboid);
 
@@ -787,7 +796,7 @@ int main(void)
 		sum += shrub;
 		count = count++;
 		if (count > 99) {
-			cout << "每一百桢的平均： " << sum / 100 << endl;
+			cout << "每一百帧的平均： " << sum / 100 << endl;
 			count = 0;
 			sum = 0.0f;
 		}

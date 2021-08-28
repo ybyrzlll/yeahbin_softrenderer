@@ -90,7 +90,7 @@ namespace mMath {
 	// 坐标变换
 	//=====================================================================
 	struct Transform {
-		Matrix4 world;         // 世界坐标变换
+		Matrix4 world;         // 世界坐标变换  用于对象坐标系因为会有localPos 转worldPos的需求
 		Matrix4 view;          // 摄影机坐标变换
 		Matrix4 projection;    // 投影变换
 		Matrix4 MVP;     // transform = world * view * projection

@@ -14,7 +14,11 @@ static Vector3f tex(IUINT32** texture, float u, float v) {
 	v = clamp(v, 0.0f, 1.0f);
 	x = texture_width * u;
 	y = texture_height * v;
-	return texture[y][x];
+	int r = texture[y][x] >> 16;
+	int g = texture[y][x] & 0xff00 - 0xff;
+	int b = texture[y][x] & 0xff;
+
+	return Vector3f(r ,g, b);
 }
 
 
