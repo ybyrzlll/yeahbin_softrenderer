@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#define shadow_bias 0.01f
+#define shadow_bias 0.1f
 #define texture_width 255
 #define texture_height 255
 using namespace mMath;

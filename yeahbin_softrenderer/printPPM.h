@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include <iostream>
+#include "globalParam.h"
 using namespace std;
 
 namespace printPPM {
@@ -13,14 +14,19 @@ namespace printPPM {
 		ofstream fout("DepthTexture.ppm");
 		fout << "P3\n" << ScreenSizeX << " " << ScreenSizeY << "\n255\n";
 		cout << "¿ªÊ¼äÖÈ¾" << endl;
-		for (int j = ScreenSizeY - 1; j >= 0; j--)
+		for (int j = 0; j <= ScreenSizeY - 1; j++)
 		{
 			for (int i = 0; i < ScreenSizeX; i++)
 			{
-				int ir = 255 * (1 - photo[j][i]);
-				int ig = 255 * (1 - photo[j][i]);
-				int ib = 255 * (1 - photo[j][i]);
-				fout << ir << " " << ig << " " << ib << "\n";
+				float val = (1.0 - photo[j][i]/ Camera_FarDistane) * 255;// / Camera_FarDistane;
+				if (photo[j][i] > 1.0) {
+					//cout << val << endl;
+				}
+				else {
+					val = 0;
+				}
+				fout << int(val) << " " << int(val) << " " << int(val) << "\n";
+				//fout << ir << " " << ig << " " << ib << "\n";
 			}
 		}
 		cout << "äÖÈ¾Íê±Ï" << endl;

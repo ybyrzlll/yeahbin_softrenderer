@@ -19,7 +19,8 @@
 #include <windows.h>
 #include <tchar.h>
 
-#define Camera_RotateSpeed 0.02
+#include "globalParam.h"
+
 
 using namespace std;
 using namespace mMath;
@@ -121,38 +122,38 @@ void device_draw_line(Device *device, int x1, int y1, int x2, int y2, IUINT32 c)
 	}
 	else {
 		int dx = (x1 < x2) ? x2 - x1 : x1 - x2;
-		int dy = (y1 < y2) ? y2 - y1 : y1 - y2;
-		if (dx >= dy) {
-			if (x2 < x1) x = x1, y = y1, x1 = x2, y1 = y2, x2 = x, y2 = y;
-			for (x = x1, y = y1; x <= x2; x++) {
-				device_pixel(device, x, y, c);
-				rem += dy;
-				if (rem >= dx) {
-					rem -= dx;
-					y += (y2 >= y1) ? 1 : -1;
-					device_pixel(device, x, y, c);
-				}
-			}
-			device_pixel(device, x2, y2, c);
+int dy = (y1 < y2) ? y2 - y1 : y1 - y2;
+if (dx >= dy) {
+	if (x2 < x1) x = x1, y = y1, x1 = x2, y1 = y2, x2 = x, y2 = y;
+	for (x = x1, y = y1; x <= x2; x++) {
+		device_pixel(device, x, y, c);
+		rem += dy;
+		if (rem >= dx) {
+			rem -= dx;
+			y += (y2 >= y1) ? 1 : -1;
+			device_pixel(device, x, y, c);
 		}
-		else {
-			if (y2 < y1) x = x1, y = y1, x1 = x2, y1 = y2, x2 = x, y2 = y;
-			for (x = x1, y = y1; y <= y2; y++) {
-				device_pixel(device, x, y, c);
-				rem += dx;
-				if (rem >= dy) {
-					rem -= dy;
-					x += (x2 >= x1) ? 1 : -1;
-					device_pixel(device, x, y, c);
-				}
-			}
-			device_pixel(device, x2, y2, c);
+	}
+	device_pixel(device, x2, y2, c);
+}
+else {
+	if (y2 < y1) x = x1, y = y1, x1 = x2, y1 = y2, x2 = x, y2 = y;
+	for (x = x1, y = y1; y <= y2; y++) {
+		device_pixel(device, x, y, c);
+		rem += dx;
+		if (rem >= dy) {
+			rem -= dy;
+			x += (x2 >= x1) ? 1 : -1;
+			device_pixel(device, x, y, c);
 		}
+	}
+	device_pixel(device, x2, y2, c);
+}
 	}
 }
 
 // 根据坐标读取纹理
-IUINT32 Deviceexture_read(const Device *device, float u, float v) {
+IUINT32 Deviceexture_read(const Device* device, float u, float v) {
 	int x, y;
 	u = u * device->max_u;
 	v = v * device->max_v;
@@ -168,8 +169,8 @@ IUINT32 Deviceexture_read(const Device *device, float u, float v) {
 //=====================================================================
 
 //光栅化----重心坐标权重插值
-void rasterize(Device *device, Vector3f &c1,
-	Vector3f &c2, Vector3f &c3) {
+void rasterize(Device* device, Vector3f& c1,
+	Vector3f& c2, Vector3f& c3) {
 
 	float area = area_of_triangle(c1, c2, c3);
 	if (area <= 0.0001 && area >= -0.0001) return;//在同一直线上
@@ -214,12 +215,16 @@ void rasterize(Device *device, Vector3f &c1,
 			if (e.x >= 0 && e.y >= 0 && e.z >= 0)//该点在顺序三边的同一侧则在三角形内
 			{
 				//透视矫正 perspective correct
-				//Vector3f lambda = e * area; 在2D中，e/area即为该三角形占整个三角形的比例
-				Vector3f temp = e * perCor;//  3D中，要乘以1/z才是准确的占每个三角形的比例
-				SumCor = 1 / (temp.x + temp.y + temp.z);
-				Vector3f lambda = temp * SumCor;
+				Vector3f lambda = e * area; //在2D中，e/area即为该三角形占整个三角形的比例
+				//Vector3f temp = e * perCor;//  3D中，要乘以1/z才是准确的占每个三角形的比例
+				//SumCor = 1 / (temp.x + temp.y + temp.z);
+				//Vector3f lambda = temp * SumCor;
 				float curDepth = lambda.dotProduct(zVals);//得到相机坐标系下的z
-				if (device->zbuffer->check(curDepth ,y, x)) {
+				if (device->zbuffer->check(curDepth, y, x)) {
+
+					//if( curDepth > 20 or curDepth < 9){
+					//	cout << curDepth << endl;
+					//}
 
 					if (render_state & RENDER_STATE_DEPTHTEXTURE)
 					{
@@ -635,19 +640,19 @@ int main(void)
 
 	//===============================shadow map===============================
 	//预计算深度纹理，使用另一渲染设备device_shadowmap
-	const int shadowmap_width = 1200,
-		shadowmap_height = 900;
+	const int shadowmap_width = 600,
+				shadowmap_height = 450;
 	Device device_shadowmap;
 	device_init(&device_shadowmap, shadowmap_width, shadowmap_height, screen_fb);
 	device_shadowmap.zbuffer = new Zbuffer(shadowmap_width, shadowmap_height);
 	device_shadowmap.render_state = RENDER_STATE_DEPTHTEXTURE;
-	PointLight pointLight(Vector3f(7, 7, -7, 1));
+	PointLight pointLight(Vector3f(4, 4, -4, 1)); 
 	pointLight.DepthTexture_init(shadowmap_width, shadowmap_height);
 	device_shadowmap.light = &pointLight;//将光添加到设备
 
 	//设置光线投影
 	camera.pos = pointLight.pos;
-	camera.vpn = { -7, -7, 7, 1 };
+	camera.vpn = { -4, -4, 4, 1 };
 	camera.up = { 0, 1, 0, 1 };
 	device_shadowmap.camera = &camera;
 	camera_at_zero(&device_shadowmap, camera);//根据摄像机计算矩阵
@@ -664,8 +669,25 @@ int main(void)
 	draw_mesh(&device_shadowmap, &cuboid);
 	draw_mesh(&device_shadowmap, &plane);
 
+	//HANDLE  hf = CreateFile("shadowMap.bmp",
+	//	GENERIC_READ | GENERIC_WRITE,
+	//	(DWORD)0,
+	//	NULL,
+	//	CREATE_ALWAYS,
+	//	FILE_ATTRIBUTE_NORMAL,
+	//	(HANDLE)NULL);
+	//if (hf == INVALID_HANDLE_VALUE)
+	//	return 0;
+
+	//if (!WriteFile(hf, (LPVOID)&screen_fb, sizeof(BITMAPFILEHEADER),
+	//	NULL, NULL))//(LPDWORD)&dwTmp
+	//{
+	//	return 0;
+	//}
+
+
 	device_destroy(&device_shadowmap);
-	//printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
+	printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
 	//===============================shadow map===============================
 
 	int window_width = 800, window_height = 600;
@@ -782,11 +804,11 @@ int main(void)
 		//device.shader = &shadowMapShader;
 		//device.shader = &ordinaryShader;
 
-		device.shader = shaderSwtich[2];
+		device.shader = shaderSwtich[1];
 
 		draw_mesh(&device, &plane);
 
-		device.shader = shaderSwtich[2];
+		device.shader = shaderSwtich[1];
 
 		draw_mesh(&device, &cuboid);
 

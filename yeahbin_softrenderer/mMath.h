@@ -3,6 +3,7 @@
 #include <math.h>
 #include "vector3D.h"
 #include "matrix.h"
+#include "globalParam.h"
 
 
 template<typename T>
@@ -110,7 +111,7 @@ namespace mMath {
 		float aspect = (float)width / ((float)height);
 		matrix_set_identity(&ts->world);
 		matrix_set_identity(&ts->view);
-		matrix_set_perspective(&ts->projection, 3.1415926f * 0.5f, aspect, 1.0f, 500.0f);
+		matrix_set_perspective(&ts->projection, 3.1415926f * 0.5f, aspect, 1.0f, Camera_FarDistane);
 		ts->w = (float)width;
 		ts->h = (float)height;
 		transform_update(ts);

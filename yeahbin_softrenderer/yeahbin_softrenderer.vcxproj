@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="device.h" />
+    <ClInclude Include="globalParam.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="matrix.h" />
     <ClInclude Include="mesh.h" />
