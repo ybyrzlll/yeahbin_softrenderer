@@ -100,6 +100,11 @@ public:
 	Vector3f fragment(float u, float v) override {
 
 		interpPos = pos[0] + (pos[1] - pos[0])* u + (pos[2] - pos[0]) * v;
+
+		/*float perCor[]= { 1 / pos[0].w, 1 / pos[1].w, 1 / pos[2].w };
+		interpPos.z = perCor[0] + (perCor[1] - perCor[0]) * u + (perCor[2] - perCor[0]) * v;
+		interpPos.w = 1.0;*/
+
 		interpPos = matrix_apply(MVP_Inverse, interpPos);//当前相机的逆矩阵
 		interpPos = matrix_apply(light.transform.MVP, interpPos);//光的MVP
 		perspectiveDivide(&interpPos);//光的透视除法
@@ -132,7 +137,7 @@ public:
 
 };
 
-class TestTexShader : public BaseShader {
+class TextureShader : public BaseShader {
 public:
 	//Per object data
 	Matrix4 MVP, MV, V, N;

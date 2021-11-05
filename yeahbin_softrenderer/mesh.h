@@ -49,7 +49,7 @@ public:
 	};
 
 	void scale(Vector3f scale) {
-
+		//охдФтыв╙жц(H^(-1))^T
 	};
 };
 

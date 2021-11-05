@@ -215,10 +215,10 @@ void rasterize(Device* device, Vector3f& c1,
 			if (e.x >= 0 && e.y >= 0 && e.z >= 0)//该点在顺序三边的同一侧则在三角形内
 			{
 				//透视矫正 perspective correct
-				Vector3f lambda = e * area; //在2D中，e/area即为该三角形占整个三角形的比例
-				//Vector3f temp = e * perCor;//  3D中，要乘以1/z才是准确的占每个三角形的比例
-				//SumCor = 1 / (temp.x + temp.y + temp.z);
-				//Vector3f lambda = temp * SumCor;
+				//Vector3f lambda = e * area; //在2D中，e/area即为该三角形占整个三角形的比例
+				Vector3f temp = e * perCor;//  3D中，要乘以1/z才是准确的占每个三角形的比例
+				SumCor = 1 / (temp.x + temp.y + temp.z);
+				Vector3f lambda = temp * SumCor;
 				float curDepth = lambda.dotProduct(zVals);//得到相机坐标系下的z
 				if (device->zbuffer->check(curDepth, y, x)) {
 
@@ -625,10 +625,10 @@ int main(void)
 	Mesh cuboid, plane;
 	buildMeshFromFile(plane, "Mesh/plane.obj");
 	plane.scale(2);
-	plane.translate(0, -1, 0);
+	plane.translate(0, 0, 0);
 	plane.buildFacetNormal();
 
-	buildMeshFromFile(cuboid, "Mesh/cuboid.obj");
+	buildMeshFromFile(cuboid, "Mesh/sphere16.obj");
 	//cuboid.scale(3);
 	cuboid.buildFacetNormal();
 
@@ -650,7 +650,7 @@ int main(void)
 	device_init(&device_shadowmap, shadowmap_width, shadowmap_height, screen_fb);
 	device_shadowmap.zbuffer = new Zbuffer(shadowmap_width, shadowmap_height);
 	device_shadowmap.render_state = RENDER_STATE_DEPTHTEXTURE;
-	PointLight pointLight(Vector3f(4, 4, -4, 1)); 
+	PointLight pointLight(Vector3f(3, 9, -3, 1)); 
 	pointLight.DepthTexture_init(shadowmap_width, shadowmap_height);
 	device_shadowmap.light = &pointLight;//将光添加到设备
 
@@ -673,25 +673,8 @@ int main(void)
 	draw_mesh(&device_shadowmap, &plane);
 	draw_mesh(&device_shadowmap, &cuboid);
 
-	//HANDLE  hf = CreateFile("shadowMap.bmp",
-	//	GENERIC_READ | GENERIC_WRITE,
-	//	(DWORD)0,
-	//	NULL,
-	//	CREATE_ALWAYS,
-	//	FILE_ATTRIBUTE_NORMAL,
-	//	(HANDLE)NULL);
-	//if (hf == INVALID_HANDLE_VALUE)
-	//	return 0;
-
-	//if (!WriteFile(hf, (LPVOID)&screen_fb, sizeof(BITMAPFILEHEADER),
-	//	NULL, NULL))//(LPDWORD)&dwTmp
-	//{
-	//	return 0;
-	//}
-
-
 	device_destroy(&device_shadowmap);
-	//printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
+	printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
 	//===============================shadow map===============================
 
 	int window_width = 800, window_height = 600;
@@ -728,7 +711,7 @@ int main(void)
 
 	PhongShader phongShader;
 	ShadowMapShader shadowMapShader;
-	TestTexShader texShader;
+	TextureShader texShader;
 	
 	shaderSwtich[0] = &phongShader;
 	shaderSwtich[1] = &shadowMapShader;
