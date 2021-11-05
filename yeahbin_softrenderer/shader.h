@@ -109,8 +109,8 @@ public:
 		float shadow = 0.0;
 		float curDepth = interpPos.w;
 		int x = LightBit_pos.x, y = LightBit_pos.y;
-		if (0 < x && x < light.transform.w
-			&& 0 < y && y< light.transform.h
+		if (0 < x - Core && x + Core < light.transform.w
+			&& 0 < y - Core && y + Core < light.transform.h
 			&& curDepth - shadow_bias > light.DepthTexture[y][x])
 		{
 

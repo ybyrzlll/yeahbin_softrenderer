@@ -623,10 +623,14 @@ int main(void)
 {
 
 	Mesh cuboid, plane;
-	buildMeshFromFile(cuboid, "Mesh/cuboid.obj");
 	buildMeshFromFile(plane, "Mesh/plane.obj");
-	cuboid.buildFacetNormal();
+	plane.scale(2);
+	plane.translate(0, -1, 0);
 	plane.buildFacetNormal();
+
+	buildMeshFromFile(cuboid, "Mesh/cuboid.obj");
+	//cuboid.scale(3);
+	cuboid.buildFacetNormal();
 
 	Camera camera;
 	int states[] = {
@@ -640,8 +644,8 @@ int main(void)
 
 	//===============================shadow map===============================
 	//预计算深度纹理，使用另一渲染设备device_shadowmap
-	const int shadowmap_width = 600,
-				shadowmap_height = 450;
+	const int shadowmap_width = 1200,
+				shadowmap_height = 900;
 	Device device_shadowmap;
 	device_init(&device_shadowmap, shadowmap_width, shadowmap_height, screen_fb);
 	device_shadowmap.zbuffer = new Zbuffer(shadowmap_width, shadowmap_height);
@@ -666,8 +670,8 @@ int main(void)
 	device_shadowmap.shader = &shader;
 
 	//渲染图像入深度纹理
-	draw_mesh(&device_shadowmap, &cuboid);
 	draw_mesh(&device_shadowmap, &plane);
+	draw_mesh(&device_shadowmap, &cuboid);
 
 	//HANDLE  hf = CreateFile("shadowMap.bmp",
 	//	GENERIC_READ | GENERIC_WRITE,
@@ -687,7 +691,7 @@ int main(void)
 
 
 	device_destroy(&device_shadowmap);
-	printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
+	//printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
 	//===============================shadow map===============================
 
 	int window_width = 800, window_height = 600;

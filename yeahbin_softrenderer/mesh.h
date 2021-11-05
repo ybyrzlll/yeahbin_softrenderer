@@ -31,6 +31,26 @@ public:
 			fNormals.push_back(N3.normalized());
 		}
 	};
+
+	void translate(float x, float y, float z) {
+		for (Vector3f &v : vertices) {
+			v.x = v.x + x;
+			v.y = v.y + y;
+			v.z = v.z + z;
+		}
+	};
+
+	void scale(float scale) {
+		for (Vector3f &v : vertices) {
+			v.x = v.x * scale;
+			v.y = v.y * scale;
+			v.z = v.z * scale;
+		}
+	};
+
+	void scale(Vector3f scale) {
+
+	};
 };
 
 #endif

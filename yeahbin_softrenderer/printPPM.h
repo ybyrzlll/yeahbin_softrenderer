@@ -13,7 +13,7 @@ namespace printPPM {
 
 		ofstream fout("DepthTexture.ppm");
 		fout << "P3\n" << ScreenSizeX << " " << ScreenSizeY << "\n255\n";
-		cout << "¿ªÊ¼äÖÈ¾" << endl;
+		cout << "¿ªÊ¼äÖÈ¾DepthTexture" << endl;
 		for (int j = 0; j <= ScreenSizeY - 1; j++)
 		{
 			for (int i = 0; i < ScreenSizeX; i++)
@@ -29,7 +29,7 @@ namespace printPPM {
 				//fout << ir << " " << ig << " " << ib << "\n";
 			}
 		}
-		cout << "äÖÈ¾Íê±Ï" << endl;
+		cout << "äÖÈ¾DepthTextureÍê±Ï" << endl;
 		fout.close();
 	}
 
