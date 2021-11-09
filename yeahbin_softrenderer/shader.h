@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#define shadow_bias 0.1f
+#define shadow_bias 0.08f
 #define texture_width 255
 #define texture_height 255
 using namespace mMath;
@@ -82,7 +82,7 @@ public:
 	Light light;
 
 	//Per vertex data
-	Vector3f pos[3];
+	Vector3f pos[3], worldPos[3];
 
 	//Per pixel data
 	Vector3f interpColor, interpPos, LightBit_pos;
@@ -93,30 +93,37 @@ public:
 		const Vector3f &textureVals, const Vector3f &tangent,
 		int index) override
 	{
+		worldPos[index] = vertex;
 		pos[index] = matrix_apply(MVP, vertex);
-		;		return pos[index];
+		return pos[index];
 	}
 
 	Vector3f fragment(float u, float v) override {
 
-		interpPos = pos[0] + (pos[1] - pos[0])* u + (pos[2] - pos[0]) * v;
+		//interpPos = pos[0] + (pos[1] - pos[0])* u + (pos[2] - pos[0]) * v;
 
 		/*float perCor[]= { 1 / pos[0].w, 1 / pos[1].w, 1 / pos[2].w };
 		interpPos.z = perCor[0] + (perCor[1] - perCor[0]) * u + (perCor[2] - perCor[0]) * v;
 		interpPos.w = 1.0;*/
 
-		interpPos = matrix_apply(MVP_Inverse, interpPos);//当前相机的逆矩阵
-		interpPos = matrix_apply(light.transform.MVP, interpPos);//光的MVP
-		perspectiveDivide(&interpPos);//光的透视除法
-		LightBit_pos = transform_viewport(&light.transform, &interpPos);//光的视口变换
+		//interpPos = matrix_apply(MVP_Inverse, interpPos);//当前相机的逆矩阵
+		//interpPos = matrix_apply(light.transform.MVP, interpPos);//光的MVP
+		//perspectiveDivide(&interpPos);//光的透视除法
+		//LightBit_pos = transform_viewport(&light.transform, &interpPos);//光的视口变换
 
-		int Core = 3;//卷积范围
+
+		Vector3f worldPos2 = worldPos[0] + (worldPos[1] - worldPos[0]) * u + (worldPos[2] - worldPos[0]) * v;
+		worldPos2 = matrix_apply(light.transform.MVP, worldPos2);//光的MVP
+		perspectiveDivide(&worldPos2);//光的透视除法
+		LightBit_pos = transform_viewport(&light.transform, &worldPos2);//光的视口变换
+
+		int Core = 7;//卷积范围
 		float shadow = 0.0;
-		float curDepth = interpPos.w;
+		float curDepth = worldPos2.w;
 		int x = LightBit_pos.x, y = LightBit_pos.y;
 		if (0 < x - Core && x + Core < light.transform.w
-			&& 0 < y - Core && y + Core < light.transform.h
-			&& curDepth - shadow_bias > light.DepthTexture[y][x])
+			&& 0 < y - Core && y + Core < light.transform.h)
+			//&& curDepth - shadow_bias > light.DepthTexture[y][x])
 		{
 
 			for (int i = -Core; i <= Core; i++) {

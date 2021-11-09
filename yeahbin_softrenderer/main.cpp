@@ -31,6 +31,9 @@ using namespace printPPM;
 #define RENDER_STATE_TEXTURE        4		// 渲染纹理
 #define RENDER_STATE_DEPTHTEXTURE     8		// 渲染阴影深度纹理
 
+
+bool testPrint = false;
+
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(Device *device, int width, int height, void *fb) {
 	int need = sizeof(void*) * (height  + 1024) + width * height * 4;
@@ -168,6 +171,37 @@ IUINT32 Deviceexture_read(const Device* device, float u, float v) {
 // 渲染实现
 //=====================================================================
 
+// 片元着色 fragShader
+void fragementShade(Device* device, float u, float v, int x, int y) {
+	Vector3f rgbVals{ 255,255,255 };
+	rgbVals = device->shader->fragment(u, v);
+
+	//test
+	//if (testPrint) 
+	//{
+	//	cout << rgbVals.x << "  " << rgbVals.y
+	//		<< "  " << rgbVals.z << endl;
+	//	rgbVals.x = 255.0f;// clamp(rgbVals.x, 0.0f, 255.0f);
+	//	rgbVals.y = 0.0f;// lamp(rgbVals.y, 0.0f, 255.0f);
+	//	rgbVals.z = 0.0f;//clamp(rgbVals.z, 0.0f, 255.0f);
+	//	float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
+	//	device->framebuffer[y][x] = sum;
+	//}
+	//else {
+	//	rgbVals.x = clamp(rgbVals.x, 0.0f, 255.0f);
+	//	rgbVals.y = clamp(rgbVals.y, 0.0f, 255.0f);
+	//	rgbVals.z = clamp(rgbVals.z, 0.0f, 255.0f);
+	//	float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
+	//	device->framebuffer[y][x] = sum;
+	//}
+
+	rgbVals.x = clamp(rgbVals.x, 0.0f, 255.0f);
+	rgbVals.y = clamp(rgbVals.y, 0.0f, 255.0f);
+	rgbVals.z = clamp(rgbVals.z, 0.0f, 255.0f);
+	float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
+	device->framebuffer[y][x] = sum;
+}
+
 //光栅化----重心坐标权重插值
 void rasterize(Device* device, Vector3f& c1,
 	Vector3f& c2, Vector3f& c3) {
@@ -178,7 +212,6 @@ void rasterize(Device* device, Vector3f& c1,
 
 	int render_state = device->render_state;
 
-	Vector3f rgbVals{ 255,255,255 };
 	Vector3f perCor{ 1 / c1.w, 1 / c2.w, 1 / c3.w };
 	float SumCor;
 
@@ -232,12 +265,7 @@ void rasterize(Device* device, Vector3f& c1,
 						//cout << curDepth << endl;
 					}
 					else if (render_state & RENDER_STATE_COLOR) {
-						rgbVals = device->shader->fragment(lambda.y, lambda.z);
-						rgbVals.x = clamp(rgbVals.x, 0.0f, 255.0f);
-						rgbVals.y = clamp(rgbVals.y, 0.0f, 255.0f);
-						rgbVals.z = clamp(rgbVals.z, 0.0f, 255.0f);
-						float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
-						device->framebuffer[y][x] = sum;
+						fragementShade(device, lambda.y, lambda.z, x, y);
 					}
 				}
 			}
@@ -250,6 +278,7 @@ void rasterize(Device* device, Vector3f& c1,
 		e_row.z += Y12;
 	}
 }
+
 
 
 void device_draw_primitive2(Device *device, const  Vector3f *vertices) {
@@ -510,6 +539,7 @@ vertex_t mesh_plane[4] = {
 	{ {  Plane_Size, -2,  -Plane_Size, 1 }, { 1, 0 }, { 1.0f, 1.0f, 1.0f }, 1 }
 };
 
+//测试裁剪
 //void draw_plane(Device *device) {
 //	vertex_t p1 = mesh_plane[0], p2 = mesh_plane[1], p3 = mesh_plane[2], p4 = mesh_plane[3];
 //	p1.tc.u = 0, p1.tc.v = 0, p2.tc.u = 0, p2.tc.v = 1;
@@ -579,15 +609,29 @@ void draw_mesh(Device *device, Mesh *mesh) {
 		//todo:暂时还无 模型变换 所以用的是模型坐标
 		//if (backFaceCulling(trianglePrimitive[0], (*fNormals)[j], device->camera->pos)) continue;
 
+		/*if (j == Test_Print_Num_Face) 
+		{
+			cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<     "<<j << endl;
+			testPrint = true; 
+		}
+		else {
+			if (testPrint == true) {
+				cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+			}
+			testPrint = false;
+		}*/
+
 		for (int i = 0; i < 3; ++i) {
-			//顶点着色
+			//顶点着色 vertex shader
 			trianglePrimitive[i] = device->shader->vertex(trianglePrimitive[i], normalPrim[i],
 				uvPrim[i], tangentPrim[i], i);
 			/*cout << normalPrim[i].x<<"  " << normalPrim[i].y
 				<< "  " << normalPrim[i].z << "  " << normalPrim[i].w << endl;*/
 		}
 
-		Crop_Cohen_Sutherland(device, trianglePrimitive);
+		//Crop_Cohen_Sutherland(device, trianglePrimitive);
+		//无裁剪
+		device_draw_primitive2(device, trianglePrimitive);
 	}
 }
 
@@ -625,11 +669,13 @@ int main(void)
 	Mesh cuboid, plane;
 	buildMeshFromFile(plane, "Mesh/plane.obj");
 	plane.scale(2);
-	plane.translate(0, 0, 0);
+	plane.translate(0, -1, 0);
 	plane.buildFacetNormal();
 
 	buildMeshFromFile(cuboid, "Mesh/sphere16.obj");
-	//cuboid.scale(3);
+	cuboid.scale(1);
+	cuboid.translate(0, 0, 0);
+
 	cuboid.buildFacetNormal();
 
 	Camera camera;
@@ -644,8 +690,8 @@ int main(void)
 
 	//===============================shadow map===============================
 	//预计算深度纹理，使用另一渲染设备device_shadowmap
-	const int shadowmap_width = 1200,
-				shadowmap_height = 900;
+	const int shadowmap_width = 2400,
+				shadowmap_height = 1800;
 	Device device_shadowmap;
 	device_init(&device_shadowmap, shadowmap_width, shadowmap_height, screen_fb);
 	device_shadowmap.zbuffer = new Zbuffer(shadowmap_width, shadowmap_height);
@@ -674,7 +720,7 @@ int main(void)
 	draw_mesh(&device_shadowmap, &cuboid);
 
 	device_destroy(&device_shadowmap);
-	printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
+	//printDepthTexture(pointLight.DepthTexture, shadowmap_width, shadowmap_height);
 	//===============================shadow map===============================
 
 	int window_width = 800, window_height = 600;
@@ -705,7 +751,7 @@ int main(void)
 
 	init_texture(&device);
 	//printColorPhoto(device.texture, 256, 256);
-	device.render_state = RENDER_STATE_COLOR;// RENDER_STATE_COLOR;
+	device.render_state = RENDER_STATE_COLOR;// RENDER_STATE_COLOR;RENDER_STATE_WIREFRAME
 
 	BaseShader *shaderSwtich[4];
 
