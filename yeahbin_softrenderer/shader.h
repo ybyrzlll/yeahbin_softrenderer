@@ -100,7 +100,8 @@ public:
 
 	Vector3f fragment(float u, float v) override {
 
-		//interpPos = pos[0] + (pos[1] - pos[0])* u + (pos[2] - pos[0]) * v;
+		interpPos = pos[0] + (pos[1] - pos[0])* u + (pos[2] - pos[0]) * v;
+		//interpPos = pos[1] + (pos[2] - pos[1]) * u + (pos[0] - pos[1]) * v;
 
 		/*float perCor[]= { 1 / pos[0].w, 1 / pos[1].w, 1 / pos[2].w };
 		interpPos.z = perCor[0] + (perCor[1] - perCor[0]) * u + (perCor[2] - perCor[0]) * v;
@@ -110,16 +111,16 @@ public:
 		//interpPos = matrix_apply(light.transform.MVP, interpPos);//光的MVP
 		//perspectiveDivide(&interpPos);//光的透视除法
 		//LightBit_pos = transform_viewport(&light.transform, &interpPos);//光的视口变换
-
+		//float curDepth = interpPos.w;
 
 		Vector3f worldPos2 = worldPos[0] + (worldPos[1] - worldPos[0]) * u + (worldPos[2] - worldPos[0]) * v;
 		worldPos2 = matrix_apply(light.transform.MVP, worldPos2);//光的MVP
 		perspectiveDivide(&worldPos2);//光的透视除法
 		LightBit_pos = transform_viewport(&light.transform, &worldPos2);//光的视口变换
-
-		int Core = 7;//卷积范围
-		float shadow = 0.0;
 		float curDepth = worldPos2.w;
+
+		int Core = 5;//卷积范围
+		float shadow = 0.0;
 		int x = LightBit_pos.x, y = LightBit_pos.y;
 		if (0 < x - Core && x + Core < light.transform.w
 			&& 0 < y - Core && y + Core < light.transform.h)

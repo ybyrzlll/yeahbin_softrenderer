@@ -177,29 +177,34 @@ void fragementShade(Device* device, float u, float v, int x, int y) {
 	rgbVals = device->shader->fragment(u, v);
 
 	//test
-	//if (testPrint) 
-	//{
-	//	cout << rgbVals.x << "  " << rgbVals.y
-	//		<< "  " << rgbVals.z << endl;
-	//	rgbVals.x = 255.0f;// clamp(rgbVals.x, 0.0f, 255.0f);
-	//	rgbVals.y = 0.0f;// lamp(rgbVals.y, 0.0f, 255.0f);
-	//	rgbVals.z = 0.0f;//clamp(rgbVals.z, 0.0f, 255.0f);
-	//	float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
-	//	device->framebuffer[y][x] = sum;
-	//}
-	//else {
-	//	rgbVals.x = clamp(rgbVals.x, 0.0f, 255.0f);
-	//	rgbVals.y = clamp(rgbVals.y, 0.0f, 255.0f);
-	//	rgbVals.z = clamp(rgbVals.z, 0.0f, 255.0f);
-	//	float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
-	//	device->framebuffer[y][x] = sum;
-	//}
+	if (testPrint) 
+	{
+		//cout << rgbVals.x << "  " << rgbVals.y<< "  " << rgbVals.z << endl;
+		//rgbVals.x = 255.0f;// clamp(rgbVals.x, 0.0f, 255.0f);
+		//rgbVals.y = 0.0f;// clamp(rgbVals.y, 0.0f, 255.0f);
+		//rgbVals.z = 0.0f;//clamp(rgbVals.z, 0.0f, 255.0f);
 
-	rgbVals.x = clamp(rgbVals.x, 0.0f, 255.0f);
+		rgbVals.x = (1.0-u-v) * 255.0f;
+		rgbVals.y = (u) * 255.0f;
+		rgbVals.z = (v) * 255.0f;
+
+		float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
+		device->framebuffer[y][x] = sum;
+	}
+	else 
+	{
+		rgbVals.x = clamp(rgbVals.x, 0.0f, 255.0f);
+		rgbVals.y = clamp(rgbVals.y, 0.0f, 255.0f);
+		rgbVals.z = clamp(rgbVals.z, 0.0f, 255.0f);
+		float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
+		device->framebuffer[y][x] = sum;
+	}
+
+	/*rgbVals.x = clamp(rgbVals.x, 0.0f, 255.0f);
 	rgbVals.y = clamp(rgbVals.y, 0.0f, 255.0f);
 	rgbVals.z = clamp(rgbVals.z, 0.0f, 255.0f);
 	float sum = ((int)rgbVals.x << 16) + ((int)rgbVals.y << 8) + rgbVals.z;
-	device->framebuffer[y][x] = sum;
+	device->framebuffer[y][x] = sum;*/
 }
 
 //光栅化----重心坐标权重插值
@@ -625,8 +630,8 @@ void draw_mesh(Device *device, Mesh *mesh) {
 			//顶点着色 vertex shader
 			trianglePrimitive[i] = device->shader->vertex(trianglePrimitive[i], normalPrim[i],
 				uvPrim[i], tangentPrim[i], i);
-			/*cout << normalPrim[i].x<<"  " << normalPrim[i].y
-				<< "  " << normalPrim[i].z << "  " << normalPrim[i].w << endl;*/
+			//if (testPrint)
+			//cout << trianglePrimitive[i].x<<"  " << trianglePrimitive[i].y<< "  " << trianglePrimitive[i].z << "  " << trianglePrimitive[i].w << endl;
 		}
 
 		//Crop_Cohen_Sutherland(device, trianglePrimitive);
@@ -672,8 +677,8 @@ int main(void)
 	plane.translate(0, -1, 0);
 	plane.buildFacetNormal();
 
-	buildMeshFromFile(cuboid, "Mesh/sphere16.obj");
-	cuboid.scale(1);
+	buildMeshFromFile(cuboid, "Mesh/sphere32.obj");
+	cuboid.scale(0.7);
 	cuboid.translate(0, 0, 0);
 
 	cuboid.buildFacetNormal();
@@ -690,19 +695,20 @@ int main(void)
 
 	//===============================shadow map===============================
 	//预计算深度纹理，使用另一渲染设备device_shadowmap
-	const int shadowmap_width = 2400,
-				shadowmap_height = 1800;
+	const int shadowmap_width = 1200,
+				shadowmap_height = 900;
 	Device device_shadowmap;
 	device_init(&device_shadowmap, shadowmap_width, shadowmap_height, screen_fb);
 	device_shadowmap.zbuffer = new Zbuffer(shadowmap_width, shadowmap_height);
 	device_shadowmap.render_state = RENDER_STATE_DEPTHTEXTURE;
-	PointLight pointLight(Vector3f(3, 9, -3, 1)); 
+	Vector3f posLight = Vector3f(3, 9, -3, 1);
+	PointLight pointLight(posLight);
 	pointLight.DepthTexture_init(shadowmap_width, shadowmap_height);
 	device_shadowmap.light = &pointLight;//将光添加到设备
 
 	//设置光线投影
 	camera.pos = pointLight.pos;
-	camera.vpn = { -4, -4, 4, 1 };
+	camera.vpn = Vector3f(0,0,0) - posLight;// { -4, -4, 4, 1 };
 	camera.up = { 0, 1, 0, 1 };
 	device_shadowmap.camera = &camera;
 	camera_at_zero(&device_shadowmap, camera);//根据摄像机计算矩阵
