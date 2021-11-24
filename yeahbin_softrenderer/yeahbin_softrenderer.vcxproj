@@ -116,6 +116,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="debugTool.h" />
     <ClInclude Include="device.h" />
     <ClInclude Include="globalParam.h" />
     <ClInclude Include="light.h" />

@@ -1,4 +1,6 @@
 //=====================================================================
+// ²Î¿¼ÁË https://github.com/skywind3000/mini3d
+// https://github.com/Angelo1211/SoftwareRenderer
 //=====================================================================
 
 #include <iostream>
@@ -677,8 +679,8 @@ int main(void)
 	plane.translate(0, -1, 0);
 	plane.buildFacetNormal();
 
-	buildMeshFromFile(cuboid, "Mesh/sphere32.obj");
-	cuboid.scale(0.7);
+	buildMeshFromFile(cuboid, "Mesh/sphere16.obj");
+	cuboid.scale(1);
 	cuboid.translate(0, 0, 0);
 
 	cuboid.buildFacetNormal();

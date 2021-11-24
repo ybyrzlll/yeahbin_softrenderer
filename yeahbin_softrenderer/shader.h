@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
-#define shadow_bias 0.08f
+#include "debugTool.h"
+#define shadow_bias 0.06f
 #define texture_width 255
 #define texture_height 255
 using namespace mMath;
@@ -82,10 +83,10 @@ public:
 	Light light;
 
 	//Per vertex data
-	Vector3f pos[3], worldPos[3];
+	Vector3f  pos[3], worldPos[3], normals[3];
 
 	//Per pixel data
-	Vector3f interpColor, interpPos, LightBit_pos;
+	Vector3f interpColor, interpPos, interpNormal, LightBit_pos;
 	Vector3f ambient;
 
 
@@ -94,6 +95,8 @@ public:
 		int index) override
 	{
 		worldPos[index] = vertex;
+		normals[index] = normal;
+
 		pos[index] = matrix_apply(MVP, vertex);
 		return pos[index];
 	}
@@ -113,24 +116,34 @@ public:
 		//LightBit_pos = transform_viewport(&light.transform, &interpPos);//光的视口变换
 		//float curDepth = interpPos.w;
 
+
+
+		interpNormal = normals[0] + (normals[1] - normals[0]) * u + (normals[2] - normals[0]) * v;
+		interpNormal.normalized();
+
 		Vector3f worldPos2 = worldPos[0] + (worldPos[1] - worldPos[0]) * u + (worldPos[2] - worldPos[0]) * v;
+		//showVector3(worldPos2);
+		worldPos2 = worldPos2 - interpNormal * 0.03 ;//* shadow_bias;
+		//showVector3(worldPos2);
+
 		worldPos2 = matrix_apply(light.transform.MVP, worldPos2);//光的MVP
 		perspectiveDivide(&worldPos2);//光的透视除法
 		LightBit_pos = transform_viewport(&light.transform, &worldPos2);//光的视口变换
 		float curDepth = worldPos2.w;
 
-		int Core = 5;//卷积范围
+		int Core = 3;//卷积范围
 		float shadow = 0.0;
 		int x = LightBit_pos.x, y = LightBit_pos.y;
 		if (0 < x - Core && x + Core < light.transform.w
 			&& 0 < y - Core && y + Core < light.transform.h)
-			//&& curDepth - shadow_bias > light.DepthTexture[y][x])
 		{
 
 			for (int i = -Core; i <= Core; i++) {
 				for (int j = -Core; j <= Core; j++) {
 					float pcfDepth = light.DepthTexture[y + i][x + j];
-					shadow += curDepth - shadow_bias > pcfDepth ? 1.0 : 0.0;
+
+					shadow += curDepth  > pcfDepth ? 1.0 : 0.0;
+					//shadow += curDepth - shadow_bias > pcfDepth ? 1.0 : 0.0;
 				}
 			}
 			//shadow = 9.0;
@@ -191,7 +204,7 @@ public:
 	Vector3f lightColorAmb{ 0.152, 0.152, 0.152 }, lightColorDiff{ 1,0.5,1 }, lightColorSpec{ 1,1,1 };
 	Vector3f rgb{ 255,255,255 };
 	PointLight *pointLight;
-
+	  
 	//Per vertex data
 	Vector3f normals[3], viewDir[3], lightDir[3];
 
